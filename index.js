@@ -17,11 +17,12 @@ class ServerlessPlugin {
    */
 
   createResources () {
-    if (this.tablesConfig === undefined || Array.isArray(this.tablesConfig) === false) {
+    if (this.tablesConfig === undefined) {
       return;
     }
 
-    this.tablesConfig.forEach((tableConfig) => {
+    Object.keys(this.tablesConfig).forEach((tableKey) => {
+      const tableConfig = this.tablesConfig[tableKey];
 
       if (!tableConfig.name) {
         return;
@@ -57,12 +58,12 @@ class ServerlessPlugin {
           "AttributeType": tableConfig.rangeKey.type || 'S'
         })
         schema.Properties.KeySchema.push({
-          "AttributeName": tableConfig.primaryKey.name,
+          "AttributeName": tableConfig.rangeKey.name,
           "KeyType": "RANGE"
         })
       }
-
-      this.serverless.service.provider.compiledCloudFormationTemplate.Resources[`Table${tableConfig.name}`] = schema;
+      const CFKey = tableKey.charAt(0).toUpperCase() + tableKey.slice(1);
+      this.serverless.service.provider.compiledCloudFormationTemplate.Resources[`Table${CFKey}`] = schema;
     });
   }
 

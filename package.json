@@ -1,6 +1,6 @@
 {
   "name": "serverless-plugin-dynamodb",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Serverless plugin to easily create DynamoDB tables",
   "main": "index.js",
   "repository": {
