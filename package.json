@@ -1,0 +1,21 @@
+{
+  "name": "serverless-plugin-dynamodb",
+  "version": "1.0.0",
+  "description": "Serverless plugin to easily create DynamoDB tables",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/daaru00/serverless-plugin-dynamodb.git"
+  },
+  "keywords": [
+    "serverless",
+    "aws",
+    "dynamodb"
+  ],
+  "author": "Fabio Gollinucci",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/daaru00/serverless-plugin-dynamodb/issues"
+  },
+  "homepage": "https://github.com/daaru00/serverless-plugin-dynamodb#readme"
+}
