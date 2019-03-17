@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/serverless-plugin-dynamodb.svg)](https://www.npmjs.com/package/serverless-plugin-dynamodb)
 
-A [serverless](https://serverless.com) plugin to easily create DynamoDB tables from configurations files.
+A [serverless](https://serverless.com) plugin to easily create DynamoDB tables from configurations files. This plugin will also edit the Lambda Role to allow any operations on created tables.
 
 ## Usage
 
@@ -40,6 +40,7 @@ custom:
 ### TODO
 
 - [x] Create tables
+- [x] Automatic create IAM Role
 - [ ] Support Secondaries Index
 - [ ] Support Global Secondaries Index
 - [ ] Support triggers

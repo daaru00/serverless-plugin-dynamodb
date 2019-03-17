@@ -15,7 +15,6 @@ class ServerlessPlugin {
   /**
    * Adding resources
    */
-
   createResources () {
     if (this.tablesConfig === undefined) {
       return;
@@ -65,6 +64,40 @@ class ServerlessPlugin {
       const CFKey = tableKey.charAt(0).toUpperCase() + tableKey.slice(1);
       this.serverless.service.provider.compiledCloudFormationTemplate.Resources[`Table${CFKey}`] = schema;
     });
+
+    this.updatePolicy()
+  }
+
+  /**
+   * Update policy to use DynamoDB tables
+   */
+  updatePolicy () {
+    const iamRole = this.serverless.service.provider.compiledCloudFormationTemplate.Resources['IamRoleLambdaExecution'];
+    if (iamRole === undefined) {
+      return;
+    }
+
+    const policy = iamRole.Properties.Policies[0]
+    if (policy === undefined) {
+      return;
+    }
+
+    const resources = []
+    Object.keys(this.tablesConfig).forEach((tableKey) => {
+      const tableConfig = this.tablesConfig[tableKey];
+      resources.push({
+        "Fn::Sub": 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/'+tableConfig.name
+      })
+    });
+
+    policy.PolicyDocument.Statement.push({
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:*"
+      ],
+      "Resource": resources
+    })
+
   }
 
 }
