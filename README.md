@@ -37,10 +37,68 @@ custom:
         write: 1
 ```
 
+## TTL
+
+To add an TimeToLive specification on table resource set the `ttl` table configuration:
+```yml
+custom:
+  tables:
+    todo:
+      name: ${self:service}-${self:provider.stage}-ToDo
+      primaryKey:
+        name: id
+        type: 'S'
+      ttl: 
+        attribute: ttl
+        enabled: true # Optional, true by default
+```
+
+## Policy
+
+By default the plugin edit the common lambda function policy to allow any function to do any data operations
+```json
+{
+  'Effect': 'Allow',
+  'Action': [
+    'dynamodb:*'
+  ],
+  'Resource': <table resource>
+}
+``` 
+to disable this behaviour set the config `skipTablePolicy` to `true`
+```yaml
+custom:
+  skipTablePolicy: true
+```
+
+## Resource names
+
+Table resource will be create using the table configuratin key name in camel case prepending "Table" before the name,
+for example:
+```yml
+custom:
+  tables:
+    todo:
+      name: ${self:service}-${self:provider.stage}-ToDo
+      primaryKey:
+        name: id
+        type: 'S'
+```
+will create a `AWS::DynamoDB::Table` resource with key name `TableTodo`, so you can reference it in this way:
+```yml
+iamRoleStatements:
+  - Effect: Allow
+    Action:
+      - dynamodb:PutItem
+    Resource: 
+      - "Fn::GetAtt": ["TableTodo", "Arn"]
+```
+
 ### TODO
 
 - [x] Create tables
 - [x] Automatic create IAM Role
+- [x] Support TTL attributes
 - [ ] Support Secondaries Index
 - [ ] Support Global Secondaries Index
 - [ ] Support triggers

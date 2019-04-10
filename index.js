@@ -1,69 +1,76 @@
-'use strict';
 
 class ServerlessPlugin {
-  constructor(serverless, options) {
-    this.serverless = serverless;
-    this.options = options;
-
-    this.tablesConfig = serverless.service.custom.tables;
+  constructor (serverless, options) {
+    this.serverless = serverless
+    this.options = options
 
     this.hooks = {
       'before:package:finalize': this.createResources.bind(this)
-    };
+    }
   }
 
   /**
    * Adding resources
    */
   createResources () {
-    if (this.tablesConfig === undefined) {
-      return;
+    const tablesConfig = this.serverless.service.custom.tables
+
+    if (tablesConfig === undefined) {
+      return
     }
 
-    Object.keys(this.tablesConfig).forEach((tableKey) => {
-      const tableConfig = this.tablesConfig[tableKey];
+    Object.keys(tablesConfig).forEach((tableKey) => {
+      const tableConfig = tablesConfig[tableKey]
 
       if (!tableConfig.name) {
-        return;
+        return
       }
 
       const schema = {
-        "Type": "AWS::DynamoDB::Table",
-        "Properties": {
-          "TableName": tableConfig.name,
-          "AttributeDefinitions": [],
-          "KeySchema": [],
-          "ProvisionedThroughput": {
-            "ReadCapacityUnits": tableConfig.throughput && tableConfig.throughput.read ? tableConfig.throughput.read : 1,
-            "WriteCapacityUnits": tableConfig.throughput && tableConfig.throughput.write ? tableConfig.throughput.write : 1
+        'Type': 'AWS::DynamoDB::Table',
+        'Properties': {
+          'TableName': tableConfig.name,
+          'AttributeDefinitions': [],
+          'KeySchema': [],
+          'ProvisionedThroughput': {
+            'ReadCapacityUnits': tableConfig.throughput && tableConfig.throughput.read ? tableConfig.throughput.read : 1,
+            'WriteCapacityUnits': tableConfig.throughput && tableConfig.throughput.write ? tableConfig.throughput.write : 1
           }
         }
       }
 
       if (tableConfig.primaryKey) {
         schema.Properties.AttributeDefinitions.push({
-          "AttributeName": tableConfig.primaryKey.name,
-          "AttributeType": tableConfig.primaryKey.type || 'S'
+          'AttributeName': tableConfig.primaryKey.name,
+          'AttributeType': tableConfig.primaryKey.type || 'S'
         })
         schema.Properties.KeySchema.push({
-          "AttributeName": tableConfig.primaryKey.name,
-          "KeyType": "HASH"
+          'AttributeName': tableConfig.primaryKey.name,
+          'KeyType': 'HASH'
         })
       }
 
       if (tableConfig.rangeKey) {
         schema.Properties.AttributeDefinitions.push({
-          "AttributeName": tableConfig.rangeKey.name,
-          "AttributeType": tableConfig.rangeKey.type || 'S'
+          'AttributeName': tableConfig.rangeKey.name,
+          'AttributeType': tableConfig.rangeKey.type || 'S'
         })
         schema.Properties.KeySchema.push({
-          "AttributeName": tableConfig.rangeKey.name,
-          "KeyType": "RANGE"
+          'AttributeName': tableConfig.rangeKey.name,
+          'KeyType': 'RANGE'
         })
       }
-      const CFKey = tableKey.charAt(0).toUpperCase() + tableKey.slice(1);
-      this.serverless.service.provider.compiledCloudFormationTemplate.Resources[`Table${CFKey}`] = schema;
-    });
+
+      if (tableConfig.ttl) {
+        schema.Properties.TimeToLiveSpecification = {
+          'AttributeName': tableConfig.ttl.attribute,
+          'Enabled': tableConfig.ttl.enabled || true
+        }
+      }
+
+      const CFKey = tableKey.charAt(0).toUpperCase() + tableKey.slice(1)
+      this.serverless.service.provider.compiledCloudFormationTemplate.Resources[`Table${CFKey}`] = schema
+    })
 
     this.updatePolicy()
   }
@@ -72,34 +79,39 @@ class ServerlessPlugin {
    * Update policy to use DynamoDB tables
    */
   updatePolicy () {
-    const iamRole = this.serverless.service.provider.compiledCloudFormationTemplate.Resources['IamRoleLambdaExecution'];
+    if (this.serverless.service.custom.skipTablePolicy === true) {
+      return
+    }
+
+    const tablesConfig = this.serverless.service.custom.tables
+
+    const iamRole = this.serverless.service.provider.compiledCloudFormationTemplate.Resources['IamRoleLambdaExecution']
     if (iamRole === undefined) {
-      return;
+      return
     }
 
     const policy = iamRole.Properties.Policies[0]
     if (policy === undefined) {
-      return;
+      return
     }
 
     const resources = []
-    Object.keys(this.tablesConfig).forEach((tableKey) => {
-      const tableConfig = this.tablesConfig[tableKey];
+    Object.keys(tablesConfig).forEach((tableKey) => {
+      const tableConfig = tablesConfig[tableKey]
       resources.push({
-        "Fn::Sub": 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/'+tableConfig.name
+        // eslint-disable-next-line no-template-curly-in-string
+        'Fn::Sub': 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/' + tableConfig.name
       })
-    });
-
-    policy.PolicyDocument.Statement.push({
-      "Effect": "Allow",
-      "Action": [
-        "dynamodb:*"
-      ],
-      "Resource": resources
     })
 
+    policy.PolicyDocument.Statement.push({
+      'Effect': 'Allow',
+      'Action': [
+        'dynamodb:*'
+      ],
+      'Resource': resources
+    })
   }
-
 }
 
-module.exports = ServerlessPlugin;
+module.exports = ServerlessPlugin
