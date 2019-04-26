@@ -58,11 +58,11 @@ custom:
 By default the plugin edit the common lambda function policy to allow any function to do any data operations
 ```json
 {
-  'Effect': 'Allow',
-  'Action': [
-    'dynamodb:*'
+  "Effect": "Allow",
+  "Action": [
+    "dynamodb:*"
   ],
-  'Resource': <table resource>
+  "Resource": "<table resource>"
 }
 ``` 
 to disable this behaviour set the config `skipTablePolicy` to `true`
